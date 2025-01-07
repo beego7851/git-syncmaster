@@ -1,16 +1,11 @@
 import { useState, useEffect } from "react";
 import { AddRepositoryForm } from "@/components/AddRepositoryForm";
 import { RepositoryCard } from "@/components/RepositoryCard";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 
-interface Repository {
-  id: string;
-  name: string;
-  url: string;
-  status: "synced" | "pending" | "error";
-  last_sync?: string;
-}
+type Repository = Database['public']['Tables']['repositories']['Row'];
 
 const Index = () => {
   const [repositories, setRepositories] = useState<Repository[]>([]);
@@ -141,7 +136,9 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 p-8 font-sans">
       <div className="max-w-4xl mx-auto space-y-8">
         <div className="text-center">
-          <h1 className="text-5xl font-bold mb-2 bg-gradient-primary text-transparent bg-clip-text">Git Repository Manager</h1>
+          <h1 className="text-5xl font-bold mb-2 bg-gradient-to-r from-blue-400 to-purple-500 text-transparent bg-clip-text">
+            Git Repository Manager
+          </h1>
           <p className="text-slate-400">
             Manage and sync your Git repositories in one place
           </p>
