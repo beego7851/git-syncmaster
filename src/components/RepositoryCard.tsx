@@ -7,7 +7,7 @@ interface Repository {
   name: string;
   url: string;
   status: "synced" | "pending" | "error";
-  lastSync?: string;
+  last_sync?: string;
 }
 
 interface RepositoryCardProps {
@@ -24,19 +24,19 @@ export function RepositoryCard({ repository, onSync, onDelete }: RepositoryCardP
   };
 
   return (
-    <Card className="w-full animate-fade-in">
+    <Card className="w-full animate-fade-in bg-slate-800/50 border-slate-700 backdrop-blur-sm">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-xl font-semibold">{repository.name}</CardTitle>
+        <CardTitle className="text-xl font-semibold text-white">{repository.name}</CardTitle>
         <div className={cn("flex items-center gap-2", statusColors[repository.status])}>
           <GitBranch className="h-4 w-4" />
           <span className="text-sm capitalize">{repository.status}</span>
         </div>
       </CardHeader>
       <CardContent>
-        <code className="font-mono text-sm text-muted-foreground break-all">{repository.url}</code>
-        {repository.lastSync && (
-          <p className="text-sm text-muted-foreground mt-2">
-            Last synced: {repository.lastSync}
+        <code className="font-mono text-sm text-slate-400 break-all">{repository.url}</code>
+        {repository.last_sync && (
+          <p className="text-sm text-slate-500 mt-2">
+            Last synced: {new Date(repository.last_sync).toLocaleString()}
           </p>
         )}
       </CardContent>
@@ -45,7 +45,7 @@ export function RepositoryCard({ repository, onSync, onDelete }: RepositoryCardP
           variant="outline"
           size="sm"
           onClick={() => onDelete(repository.url)}
-          className="text-destructive hover:text-destructive-foreground hover:bg-destructive"
+          className="text-destructive hover:text-destructive-foreground hover:bg-destructive bg-transparent border-slate-700"
         >
           <Trash2 className="h-4 w-4" />
         </Button>
@@ -54,6 +54,7 @@ export function RepositoryCard({ repository, onSync, onDelete }: RepositoryCardP
           size="sm"
           onClick={() => onSync(repository.url)}
           disabled={repository.status === "pending"}
+          className="bg-transparent border-slate-700 text-white hover:bg-slate-700"
         >
           <RefreshCw className={cn("h-4 w-4", repository.status === "pending" && "animate-spin")} />
         </Button>

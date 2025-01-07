@@ -1,20 +1,62 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AddRepositoryForm } from "@/components/AddRepositoryForm";
 import { RepositoryCard } from "@/components/RepositoryCard";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Repository {
+  id: string;
   name: string;
   url: string;
   status: "synced" | "pending" | "error";
-  lastSync?: string;
+  last_sync?: string;
 }
 
 const Index = () => {
   const [repositories, setRepositories] = useState<Repository[]>([]);
   const { toast } = useToast();
 
-  const handleAddRepository = (name: string, url: string) => {
+  useEffect(() => {
+    fetchRepositories();
+    subscribeToChanges();
+  }, []);
+
+  const fetchRepositories = async () => {
+    const { data, error } = await supabase
+      .from('repositories')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to fetch repositories",
+      });
+      return;
+    }
+
+    setRepositories(data || []);
+  };
+
+  const subscribeToChanges = () => {
+    const channel = supabase
+      .channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'repositories' },
+        () => {
+          fetchRepositories();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  };
+
+  const handleAddRepository = async (name: string, url: string) => {
     if (repositories.some((repo) => repo.url === url)) {
       toast({
         variant: "destructive",
@@ -24,15 +66,25 @@ const Index = () => {
       return;
     }
 
-    setRepositories([
-      ...repositories,
-      {
-        name,
-        url,
-        status: "synced",
-        lastSync: new Date().toLocaleString(),
-      },
-    ]);
+    const { error } = await supabase
+      .from('repositories')
+      .insert([
+        {
+          name,
+          url,
+          status: 'synced',
+          last_sync: new Date().toISOString(),
+        }
+      ]);
+
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to add repository",
+      });
+      return;
+    }
 
     toast({
       title: "Success",
@@ -40,24 +92,22 @@ const Index = () => {
     });
   };
 
-  const handleSync = (url: string) => {
-    setRepositories(
-      repositories.map((repo) =>
-        repo.url === url
-          ? { ...repo, status: "pending" }
-          : repo
-      )
-    );
+  const handleSync = async (url: string) => {
+    // Update status to pending
+    await supabase
+      .from('repositories')
+      .update({ status: 'pending' })
+      .eq('url', url);
 
     // Simulate sync
-    setTimeout(() => {
-      setRepositories(
-        repositories.map((repo) =>
-          repo.url === url
-            ? { ...repo, status: "synced", lastSync: new Date().toLocaleString() }
-            : repo
-        )
-      );
+    setTimeout(async () => {
+      await supabase
+        .from('repositories')
+        .update({
+          status: 'synced',
+          last_sync: new Date().toISOString()
+        })
+        .eq('url', url);
 
       toast({
         title: "Success",
@@ -66,8 +116,21 @@ const Index = () => {
     }, 2000);
   };
 
-  const handleDelete = (url: string) => {
-    setRepositories(repositories.filter((repo) => repo.url !== url));
+  const handleDelete = async (url: string) => {
+    const { error } = await supabase
+      .from('repositories')
+      .delete()
+      .eq('url', url);
+
+    if (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to delete repository",
+      });
+      return;
+    }
+
     toast({
       title: "Success",
       description: "Repository removed successfully",
@@ -75,27 +138,27 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background p-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 p-8 font-sans">
       <div className="max-w-4xl mx-auto space-y-8">
-        <div>
-          <h1 className="text-4xl font-bold mb-2">Git Repository Manager</h1>
-          <p className="text-muted-foreground">
+        <div className="text-center">
+          <h1 className="text-5xl font-bold mb-2 bg-gradient-primary text-transparent bg-clip-text">Git Repository Manager</h1>
+          <p className="text-slate-400">
             Manage and sync your Git repositories in one place
           </p>
         </div>
 
         <div className="grid gap-8 md:grid-cols-[300px,1fr]">
-          <div className="space-y-4">
-            <h2 className="text-lg font-semibold">Add Repository</h2>
+          <div className="space-y-4 bg-slate-800/50 p-6 rounded-lg backdrop-blur-sm">
+            <h2 className="text-lg font-semibold text-white">Add Repository</h2>
             <AddRepositoryForm onAdd={handleAddRepository} />
           </div>
 
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold">
+            <h2 className="text-lg font-semibold text-white">
               Repositories ({repositories.length})
             </h2>
             {repositories.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
+              <div className="text-center py-8 text-slate-400 bg-slate-800/50 rounded-lg backdrop-blur-sm">
                 No repositories added yet
               </div>
             ) : (

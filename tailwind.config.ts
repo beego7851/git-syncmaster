@@ -55,6 +55,11 @@ export default {
       },
       fontFamily: {
         mono: ["JetBrains Mono", "monospace"],
+        sans: ["Space Grotesk", "sans-serif"],
+      },
+      backgroundImage: {
+        'gradient-primary': 'linear-gradient(90deg, hsla(221, 45%, 73%, 1) 0%, hsla(220, 78%, 29%, 1) 100%)',
+        'gradient-secondary': 'linear-gradient(90deg, hsla(277, 75%, 84%, 1) 0%, hsla(297, 50%, 51%, 1) 100%)',
       },
       borderRadius: {
         lg: "var(--radius)",
