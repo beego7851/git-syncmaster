@@ -8,6 +8,8 @@ interface Repository {
   url: string;
   status: "synced" | "pending" | "error";
   last_sync?: string;
+  nickname?: string;
+  is_master?: boolean;
 }
 
 interface RepositoryCardProps {
@@ -26,7 +28,21 @@ export function RepositoryCard({ repository, onSync, onDelete }: RepositoryCardP
   return (
     <Card className="w-full animate-fade-in bg-slate-800/50 border-slate-700 backdrop-blur-sm">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-xl font-semibold text-white">{repository.name}</CardTitle>
+        <div className="space-y-1">
+          <CardTitle className="text-xl font-semibold text-white">
+            {repository.name}
+            {repository.is_master && (
+              <span className="ml-2 text-sm bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-full">
+                Master
+              </span>
+            )}
+          </CardTitle>
+          {repository.nickname && (
+            <p className="text-sm text-slate-400">
+              {repository.nickname}
+            </p>
+          )}
+        </div>
         <div className={cn("flex items-center gap-2", statusColors[repository.status])}>
           <GitBranch className="h-4 w-4" />
           <span className="text-sm capitalize">{repository.status}</span>

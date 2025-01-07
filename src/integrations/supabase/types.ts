@@ -13,8 +13,10 @@ export type Database = {
         Row: {
           created_at: string | null
           id: string
+          is_master: boolean | null
           last_sync: string | null
           name: string
+          nickname: string | null
           status: string | null
           updated_at: string | null
           url: string
@@ -22,8 +24,10 @@ export type Database = {
         Insert: {
           created_at?: string | null
           id?: string
+          is_master?: boolean | null
           last_sync?: string | null
           name: string
+          nickname?: string | null
           status?: string | null
           updated_at?: string | null
           url: string
@@ -31,13 +35,51 @@ export type Database = {
         Update: {
           created_at?: string | null
           id?: string
+          is_master?: boolean | null
           last_sync?: string | null
           name?: string
+          nickname?: string | null
           status?: string | null
           updated_at?: string | null
           url?: string
         }
         Relationships: []
+      }
+      repository_relationships: {
+        Row: {
+          clone_repo_id: string
+          created_at: string | null
+          id: string
+          master_repo_id: string
+        }
+        Insert: {
+          clone_repo_id: string
+          created_at?: string | null
+          id?: string
+          master_repo_id: string
+        }
+        Update: {
+          clone_repo_id?: string
+          created_at?: string | null
+          id?: string
+          master_repo_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "repository_relationships_clone_repo_id_fkey"
+            columns: ["clone_repo_id"]
+            isOneToOne: false
+            referencedRelation: "repositories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "repository_relationships_master_repo_id_fkey"
+            columns: ["master_repo_id"]
+            isOneToOne: false
+            referencedRelation: "repositories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

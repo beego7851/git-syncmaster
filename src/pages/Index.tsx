@@ -5,10 +5,8 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 
-// Define a more specific type for the status
 type RepositoryStatus = "synced" | "pending" | "error";
 
-// Extend the base type from the database and override the status type
 type Repository = Omit<Database['public']['Tables']['repositories']['Row'], 'status'> & {
   status: RepositoryStatus | null;
 };
@@ -37,7 +35,6 @@ const Index = () => {
       return;
     }
 
-    // Type assertion to ensure status is one of our expected values
     setRepositories(data?.map(repo => ({
       ...repo,
       status: (repo.status as RepositoryStatus) || 'synced'
@@ -61,7 +58,7 @@ const Index = () => {
     };
   };
 
-  const handleAddRepository = async (name: string, url: string) => {
+  const handleAddRepository = async (name: string, url: string, nickname: string, isMaster: boolean) => {
     if (repositories.some((repo) => repo.url === url)) {
       toast({
         variant: "destructive",
@@ -77,6 +74,8 @@ const Index = () => {
         {
           name,
           url,
+          nickname: nickname || null,
+          is_master: isMaster,
           status: 'synced' as RepositoryStatus,
           last_sync: new Date().toISOString(),
         }
@@ -98,13 +97,11 @@ const Index = () => {
   };
 
   const handleSync = async (url: string) => {
-    // Update status to pending
     await supabase
       .from('repositories')
       .update({ status: 'pending' as RepositoryStatus })
       .eq('url', url);
 
-    // Simulate sync
     setTimeout(async () => {
       await supabase
         .from('repositories')
