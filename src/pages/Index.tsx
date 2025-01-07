@@ -5,7 +5,13 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 
-type Repository = Database['public']['Tables']['repositories']['Row'];
+// Define a more specific type for the status
+type RepositoryStatus = "synced" | "pending" | "error";
+
+// Extend the base type from the database and override the status type
+type Repository = Omit<Database['public']['Tables']['repositories']['Row'], 'status'> & {
+  status: RepositoryStatus | null;
+};
 
 const Index = () => {
   const [repositories, setRepositories] = useState<Repository[]>([]);
@@ -31,7 +37,11 @@ const Index = () => {
       return;
     }
 
-    setRepositories(data || []);
+    // Type assertion to ensure status is one of our expected values
+    setRepositories(data?.map(repo => ({
+      ...repo,
+      status: (repo.status as RepositoryStatus) || 'synced'
+    })) || []);
   };
 
   const subscribeToChanges = () => {
@@ -67,7 +77,7 @@ const Index = () => {
         {
           name,
           url,
-          status: 'synced',
+          status: 'synced' as RepositoryStatus,
           last_sync: new Date().toISOString(),
         }
       ]);
@@ -91,7 +101,7 @@ const Index = () => {
     // Update status to pending
     await supabase
       .from('repositories')
-      .update({ status: 'pending' })
+      .update({ status: 'pending' as RepositoryStatus })
       .eq('url', url);
 
     // Simulate sync
@@ -99,7 +109,7 @@ const Index = () => {
       await supabase
         .from('repositories')
         .update({
-          status: 'synced',
+          status: 'synced' as RepositoryStatus,
           last_sync: new Date().toISOString()
         })
         .eq('url', url);
